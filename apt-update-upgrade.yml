@@ -4,14 +4,6 @@
   hosts: ssh_able
 
   tasks:
-    - name: Check if apt cache has ever been updated before
-      ansible.builtin.stat:
-        path: /var/lib/apt/lists/partial
-      register: apt_dir_partial
-    - name: Update apt cache for the first time
-      ansible.builtin.apt:
-        update_cache: yes
-      when: not apt_dir_partial.stat.exists
 
     - name: Update packages with apt
       when: ansible_pkg_mgr == 'apt'
