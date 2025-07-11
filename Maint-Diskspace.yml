@@ -1,6 +1,6 @@
 ---
 - name: Check disk space
-  hosts: discovered_hosts
+  hosts: ssh_able
 
   tasks:
     - name: Check disk space available
