@@ -15,7 +15,7 @@
 
 - name: Send discord message when disk space is over 80%
   uri:
-    url: "webhook"
+    url: "{{ discord_webhook}}"
     method: POST
     body_format: json
     body: '{"content": "Disk space on {{ inventory_hostname }} is above 80%!"}'
