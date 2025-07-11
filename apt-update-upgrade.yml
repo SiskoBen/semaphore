@@ -1,6 +1,6 @@
 ---
 - name: Update and upgrade apt packages
-  hosts: ssh-able
+  hosts: ssh_able
 
   tasks:
     - name: Update packages with apt
