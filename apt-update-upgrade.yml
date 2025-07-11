@@ -1,6 +1,6 @@
 ---
 - name: Update and upgrade apt packages
-  become: yes
+  become: true
   hosts: ssh_able
 
   tasks:
