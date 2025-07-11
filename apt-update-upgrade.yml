@@ -1,7 +1,7 @@
 ---
 - name: Update and upgrade apt packages
   become: true
-  hosts: ssh_able
+  hosts: 192.168.34.206
 
   tasks:
     - name: Check if apt cache has ever been updated before
