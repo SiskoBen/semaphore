@@ -18,7 +18,7 @@
         url: "{{ discord_webhook}}"
         method: POST
         body_format: json
-        body: '{"content": "Disk space on {{ inventory_hostname }} is above 80%!"}'
+        body: '{"content": "Disk space on {{ inventory_hostname }} is {{ disk_usage.stdout }}% full (above 80%)!"}'
         headers:
           Content-Type: application/json
         status_code: 204
