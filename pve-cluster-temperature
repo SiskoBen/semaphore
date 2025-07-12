@@ -8,48 +8,57 @@
     threshold: 70
 
   tasks:
-    - name: Get JSON sensor data
+    - name: Get JSON output from sensors
       command: sensors -j
       register: sensors_raw
       changed_when: false
 
-    - name: Parse sensors JSON
+    - name: Parse JSON output
       set_fact:
         sensors_json: "{{ sensors_raw.stdout | from_json }}"
 
     - name: Extract core temperatures
       set_fact:
-        core_temps: >-
+        cores: >-
           {{
             sensors_json[sensor_group]
             | dict2items
-            | selectattr("key", "match", "Core [0-9]+")
-            | map(attribute="value.temp1_input")
+            | selectattr("key", "match", "^Core [0-9]+$")
+            | map(attribute="value")
             | list
           }}
 
-    - name: Create temperature summary text
+    - name: Build temperature summary
       set_fact:
-        summary_text: >-
-          {% set lines = [] %}
-          {% for key, val in sensors_json[sensor_group].items() %}
-            {% if key is match("Core [0-9]+") %}
-              {% set line = key ~ ": " ~ val.temp1_input ~ "°C" %}
-              {% do lines.append(line) %}
-            {% endif %}
-          {% endfor %}
-          {{ lines | join(', ') }}
+        temp_summary: >-
+          {{
+            cores | zip(range(cores | length))
+            | map(lambda c: "Core " ~ c[1] ~ ": " ~ c[0]['temp' ~ (c[1]+2) ~ '_input'] ~ "°C")
+            | join(', ')
+          }}
 
-    - name: Send Discord alert if any core exceeds threshold
+    - name: Check for hot cores
+      set_fact:
+        hot_core_found: >-
+          {{
+            cores
+            | map(attribute='temp2_input', default=0.0)
+            | select(">", threshold)
+            | list
+            | length > 0
+          }}
+
+    - name: Send Discord alert if any core is too hot
       uri:
         url: "{{ discord_webhook }}"
         method: POST
         body_format: json
         body: >
           {
-            "content": "🔥 Temperature alert on {{ inventory_hostname }}!\nExceeded threshold ({{ threshold }}°C).\nReadings: {{ summary_text }}"
+            "content": "🔥 {{ inventory_hostname }}: CPU temperature alert!\n{{ temp_summary }}\nThreshold: {{ threshold }}°C"
           }
         headers:
           Content-Type: application/json
         status_code: 204
-      when: core_temps | select(">", threshold) | list | length > 0
+      when: hot_core_found
+
