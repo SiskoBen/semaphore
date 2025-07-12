@@ -17,20 +17,18 @@
       set_fact:
         sensors_json: "{{ sensors_raw.stdout | from_json }}"
 
-    - name: Check if any sensor is above threshold
+    - name: Check if any actual temperature reading is above threshold
       set_fact:
         hot_sensor_found: >-
           {% set hot = false %}
           {% for chip_data in sensors_json.values() %}
-            {% for values in chip_data.values() %}
-              {% if values is mapping %}
-                {% for val in values.values() %}
-                  {% if val is number and val > threshold %}
+            {% for sensor_block in chip_data.values() %}
+              {% if sensor_block is mapping %}
+                {% for field, value in sensor_block.items() %}
+                  {% if field is match("^temp[0-9]+_input$") and value is number and value > threshold %}
                     {% set hot = true %}
                   {% endif %}
                 {% endfor %}
-              {% elif values is number and values > threshold %}
-                {% set hot = true %}
               {% endif %}
             {% endfor %}
           {% endfor %}
@@ -43,7 +41,7 @@
         body_format: json
         body: >
           {
-            "content": "🔥 {{ inventory_hostname }}: One or more temperature sensors are above {{ threshold }}°C"
+            "content": "🔥 {{ inventory_hostname }}: Temperature Alert — a sensor has exceeded {{ threshold }}°C"
           }
         headers:
           Content-Type: application/json
