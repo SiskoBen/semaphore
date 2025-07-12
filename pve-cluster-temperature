@@ -25,8 +25,7 @@
             {% if item.key is match("^Core [0-9]+$") %}
               {% for attr_name, value in item.value.items() %}
                 {% if attr_name is match("^temp[0-9]+_input$") %}
-                  {% set line = item.key ~ ": " ~ value ~ "°C" %}
-                  {% do lines.append(line) %}
+                  {% set lines = lines + [ item.key ~ ": " ~ value ~ "°C" ] %}
                 {% endif %}
               {% endfor %}
             {% endif %}
@@ -59,4 +58,3 @@
           Content-Type: application/json
         status_code: 204
       when: hot_core_found
-
