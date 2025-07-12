@@ -1,0 +1,55 @@
+---
+- name: Monitor all core temperatures via sensors JSON and alert Discord
+  hosts: all
+  become: true
+  vars:
+    discord_webhook: "https://discord.com/api/webhooks/your_webhook_url"
+    sensor_group: "coretemp-isa-0000"
+    threshold: 70
+
+  tasks:
+    - name: Get JSON sensor data
+      command: sensors -j
+      register: sensors_raw
+      changed_when: false
+
+    - name: Parse sensors JSON
+      set_fact:
+        sensors_json: "{{ sensors_raw.stdout | from_json }}"
+
+    - name: Extract core temperatures
+      set_fact:
+        core_temps: >-
+          {{
+            sensors_json[sensor_group]
+            | dict2items
+            | selectattr("key", "match", "Core [0-9]+")
+            | map(attribute="value.temp1_input")
+            | list
+          }}
+
+    - name: Create temperature summary text
+      set_fact:
+        summary_text: >-
+          {% set lines = [] %}
+          {% for key, val in sensors_json[sensor_group].items() %}
+            {% if key is match("Core [0-9]+") %}
+              {% set line = key ~ ": " ~ val.temp1_input ~ "°C" %}
+              {% do lines.append(line) %}
+            {% endif %}
+          {% endfor %}
+          {{ lines | join(', ') }}
+
+    - name: Send Discord alert if any core exceeds threshold
+      uri:
+        url: "{{ discord_webhook }}"
+        method: POST
+        body_format: json
+        body: >
+          {
+            "content": "🔥 Temperature alert on {{ inventory_hostname }}!\nExceeded threshold ({{ threshold }}°C).\nReadings: {{ summary_text }}"
+          }
+        headers:
+          Content-Type: application/json
+        status_code: 204
+      when: core_temps | select(">", threshold) | list | length > 0
