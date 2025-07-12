@@ -7,7 +7,7 @@
     sensor_group: "nct6798-isa-0290"
     sensor_label: "CPUTIN"
     sensor_field: "temp2_input"
-    threshold: 40
+    threshold: 70
 
   tasks:
     - name: Get JSON output from sensors
