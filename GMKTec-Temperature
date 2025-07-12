@@ -1,6 +1,6 @@
 ---
 - name: Monitor all core temperatures via sensors JSON and alert Discord
-  hosts: GMKtec
+  hosts: Hardware
   become: true
   vars:
     discord_webhook: "{{ discord_webhook}}"
