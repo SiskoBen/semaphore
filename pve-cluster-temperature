@@ -17,46 +17,51 @@
       set_fact:
         sensors_json: "{{ sensors_raw.stdout | from_json }}"
 
-    - name: Build temperature summary
+    - name: Build full temperature report
       set_fact:
-        temp_summary: >-
+        temp_report: >-
           {% set lines = [] %}
-          {% for item in sensors_json[sensor_group] | dict2items %}
-            {% if item.key is match("^Core [0-9]+$") %}
-              {% for attr_name, value in item.value.items() %}
-                {% if attr_name is match("^temp[0-9]+_input$") %}
-                  {% set lines = lines + [ item.key ~ ": " ~ value ~ "°C" ] %}
-                {% endif %}
-              {% endfor %}
-            {% endif %}
+          {% for chip_name, chip_data in sensors_json.items() %}
+            {% for sensor_label, values in chip_data.items() %}
+              {% if sensor_label != "Adapter" %}
+                {% for field, value in values.items() %}
+                  {% if field is match("^temp[0-9]+_input$") %}
+                    {% set line = chip_name ~ " → " ~ sensor_label ~ ": " ~ value ~ "°C" %}
+                    {% set lines = lines + [line] %}
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
           {% endfor %}
-          {{ lines | join(', ') }}
+          {{ lines | join('\n') }}
 
-    - name: Check if any core exceeds threshold
+    - name: Check if any sensor is above threshold
       set_fact:
-        hot_core_found: >-
+        hot_sensor_found: >-
           {% set hot = false %}
-          {% for item in sensors_json[sensor_group] | dict2items %}
-            {% if item.key is match("^Core [0-9]+$") %}
-              {% for attr_name, value in item.value.items() %}
-                {% if attr_name is match("^temp[0-9]+_input$") and value is number and value > threshold %}
-                  {% set hot = true %}
-                {% endif %}
-              {% endfor %}
-            {% endif %}
+          {% for chip_data in sensors_json.values() %}
+            {% for values in chip_data.values() %}
+              {% if values is mapping %}
+                {% for val in values.values() %}
+                  {% if val is number and val > threshold %}
+                    {% set hot = true %}
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
           {% endfor %}
           {{ hot }}
 
-    - name: Send Discord alert if any core is too hot
+    - name: Send Discord alert with full temperature map
       uri:
         url: "{{ discord_webhook }}"
         method: POST
         body_format: json
         body: >
           {
-            "content": "🔥 {{ inventory_hostname }}: CPU temperature alert!\nThreshold: {{ threshold }}°C\n{{ temp_summary }}"
+            "content": "🌡️ {{ inventory_hostname }}: Temperature Alert\nThreshold: {{ threshold }}°C\n\n{{ temp_report }}"
           }
         headers:
           Content-Type: application/json
         status_code: 204
-      when: hot_core_found
+      when: hot_sensor_found
