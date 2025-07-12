@@ -31,11 +31,18 @@
     - name: Build temperature summary
       set_fact:
         temp_summary: >-
-          {{
-            cores | zip(range(cores | length))
-            | map(lambda c: "Core " ~ c[1] ~ ": " ~ c[0]['temp' ~ (c[1]+2) ~ '_input'] ~ "°C")
-            | join(', ')
-          }}
+          {% set lines = [] %}
+          {% for item in sensors_json[sensor_group] | dict2items %}
+            {% if item.key is match("^Core [0-9]+$") %}
+              {% for attr_name, value in item.value.items() %}
+                {% if attr_name is match("^temp[0-9]+_input$") %}
+                  {% set line = item.key ~ ": " ~ value ~ "°C" %}
+                  {% do lines.append(line) %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+          {{ lines | join(', ') }}
 
     - name: Check for hot cores
       set_fact:
