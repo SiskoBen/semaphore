@@ -17,17 +17,6 @@
       set_fact:
         sensors_json: "{{ sensors_raw.stdout | from_json }}"
 
-    - name: Extract core temperatures
-      set_fact:
-        cores: >-
-          {{
-            sensors_json[sensor_group]
-            | dict2items
-            | selectattr("key", "match", "^Core [0-9]+$")
-            | map(attribute="value")
-            | list
-          }}
-
     - name: Build temperature summary
       set_fact:
         temp_summary: >-
@@ -44,16 +33,18 @@
           {% endfor %}
           {{ lines | join(', ') }}
 
-    - name: Check for hot cores
+    - name: Check if any core exceeds threshold
       set_fact:
         hot_core_found: >-
-          {{
-            cores
-            | map(attribute='temp2_input', default=0.0)
-            | select(">", threshold)
-            | list
-            | length > 0
-          }}
+          {% set hot = false %}
+          {% for item in sensors_json[sensor_group].values() %}
+            {% for val in item.values() %}
+              {% if val is number and val > threshold %}
+                {% set hot = true %}
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+          {{ hot }}
 
     - name: Send Discord alert if any core is too hot
       uri:
@@ -62,7 +53,7 @@
         body_format: json
         body: >
           {
-            "content": "🔥 {{ inventory_hostname }}: CPU temperature alert!\n{{ temp_summary }}\nThreshold: {{ threshold }}°C"
+            "content": "🔥 {{ inventory_hostname }}: CPU temperature alert!\nThreshold: {{ threshold }}°C\n{{ temp_summary }}"
           }
         headers:
           Content-Type: application/json
