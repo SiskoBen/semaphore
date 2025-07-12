@@ -7,6 +7,7 @@
     sensor_group: "coretemp-isa-0000"
     sensor_label: "Core 0"
     sensor_field: "temp2_input"
+    threshold: 70
 
   tasks:
     - name: Get JSON output from sensors
@@ -19,15 +20,16 @@
         current_temp: >-
           {{ (sensors_raw.stdout | from_json)[sensor_group][sensor_label][sensor_field] }}
 
-    - name: Send Discord notification
+    - name: Send Discord notification if temperature is high
       uri:
         url: "{{ discord_webhook }}"
         method: POST
         body_format: json
         body: >
           {
-            "content": "🌡️ {{ inventory_hostname }} reports {{ sensor_label }}: {{ current_temp }}°C"
+            "content": "🔥 {{ inventory_hostname }} reports {{ sensor_label }}: {{ current_temp }}°C — above threshold {{ threshold }}°C"
           }
         headers:
           Content-Type: application/json
         status_code: 204
+      when: current_temp | float > threshold
