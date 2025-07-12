@@ -24,12 +24,19 @@
           {% for chip_name, chip_data in sensors_json.items() %}
             {% for sensor_label, values in chip_data.items() %}
               {% if sensor_label != "Adapter" %}
-                {% for field, value in values.items() %}
-                  {% if field is match("^temp[0-9]+_input$") %}
-                    {% set line = chip_name ~ " → " ~ sensor_label ~ ": " ~ value ~ "°C" %}
+                {% if values is mapping %}
+                  {% for field, value in values.items() %}
+                    {% if field is match("^temp[0-9]+_input$") %}
+                      {% set line = chip_name ~ " → " ~ sensor_label ~ ": " ~ value ~ "°C" %}
+                      {% set lines = lines + [line] %}
+                    {% endif %}
+                  {% endfor %}
+                {% else %}
+                  {% if sensor_label is match("^temp[0-9]+_input$") %}
+                    {% set line = chip_name ~ ": " ~ values ~ "°C" %}
                     {% set lines = lines + [line] %}
                   {% endif %}
-                {% endfor %}
+                {% endif %}
               {% endif %}
             {% endfor %}
           {% endfor %}
@@ -47,6 +54,8 @@
                     {% set hot = true %}
                   {% endif %}
                 {% endfor %}
+              {% elif values is number and values > threshold %}
+                {% set hot = true %}
               {% endif %}
             {% endfor %}
           {% endfor %}
