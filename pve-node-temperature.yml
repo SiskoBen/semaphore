@@ -1,0 +1,35 @@
+---
+- name: Read temperature and send to Discord
+  hosts: pve
+  become: false
+  vars:
+    discord_webhook: "{{ discord_webhook}}"
+    sensor_group: "nct6798-isa-0290"
+    sensor_label: "CPUTIN"
+    sensor_field: "temp2_input"
+    threshold: 40
+
+  tasks:
+    - name: Get JSON output from sensors
+      command: sensors -j
+      register: sensors_raw
+      changed_when: false
+
+    - name: Parse JSON and extract value
+      set_fact:
+        current_temp: >-
+          {{ (sensors_raw.stdout | from_json)[sensor_group][sensor_label][sensor_field] }}
+
+    - name: Send Discord notification if temperature is high
+      uri:
+        url: "{{ discord_webhook }}"
+        method: POST
+        body_format: json
+        body: >
+          {
+            "content": "🔥 {{ inventory_hostname }} reports {{ sensor_label }}: {{ current_temp }}°C — above threshold {{ threshold }}°C"
+          }
+        headers:
+          Content-Type: application/json
+        status_code: 204
+      when: current_temp | float > threshold
