@@ -1,7 +1,7 @@
 ---
 - name: Monitor all core temperatures via sensors JSON and alert Discord
   hosts: Hardware
-  become: true
+  become: false
   vars:
     discord_webhook: "{{ discord_webhook}}"
     sensor_group: "coretemp-isa-0000"
