@@ -52,14 +52,15 @@
           {% endfor %}
           {{ hot }}
 
-    - name: Send Discord alert with full temperature map
+    - name: Send Discord alert with full temperature report
       uri:
         url: "{{ discord_webhook }}"
         method: POST
         body_format: json
-        body: >
+        body: >-
           {
-            "content": "🌡️ {{ inventory_hostname }}: Temperature Alert\nThreshold: {{ threshold }}°C\n\n{{ temp_report | replace('\n', '\\n') }}"
+            "content": "🌡️ {{ inventory_hostname }}: Temperature Alert\nThreshold: {{ threshold }}°C\n\n```{{ temp_report }}```"
+          }
         headers:
           Content-Type: application/json
         status_code: 204
