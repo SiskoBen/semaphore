@@ -1,11 +1,12 @@
 ---
-- name: Monitor all core temperatures via sensors JSON and alert Discord
+- name: Read temperature and send to Discord
   hosts: GMKTec
   become: false
   vars:
     discord_webhook: "{{ discord_webhook}}"
     sensor_group: "coretemp-isa-0000"
-    threshold: 90
+    sensor_label: "Core 0"
+    sensor_field: "temp2_input"
 
   tasks:
     - name: Get JSON output from sensors
@@ -13,37 +14,20 @@
       register: sensors_raw
       changed_when: false
 
-    - name: Parse JSON output
+    - name: Parse JSON and extract value
       set_fact:
-        sensors_json: "{{ sensors_raw.stdout | from_json }}"
+        current_temp: >-
+          {{ (sensors_raw.stdout | from_json)[sensor_group][sensor_label][sensor_field] }}
 
-    - name: Check if any actual temperature reading is above threshold
-      set_fact:
-        hot_sensor_found: >-
-          {% set hot = false %}
-          {% for chip_data in sensors_json.values() %}
-            {% for sensor_block in chip_data.values() %}
-              {% if sensor_block is mapping %}
-                {% for field, value in sensor_block.items() %}
-                  {% if field is match("^temp[0-9]+_input$") and value is number and value > threshold %}
-                    {% set hot = true %}
-                  {% endif %}
-                {% endfor %}
-              {% endif %}
-            {% endfor %}
-          {% endfor %}
-          {{ hot }}
-
-    - name: Send Discord alert if temperature is high
+    - name: Send Discord notification
       uri:
         url: "{{ discord_webhook }}"
         method: POST
         body_format: json
         body: >
           {
-            "content": "🔥 {{ inventory_hostname }}: Temperature Alert — a sensor has exceeded {{ threshold }}°C"
+            "content": "🌡️ {{ inventory_hostname }} reports {{ sensor_label }}: {{ current_temp }}°C"
           }
         headers:
           Content-Type: application/json
         status_code: 204
-      when: hot_sensor_found
