@@ -5,7 +5,7 @@
   vars:
     discord_webhook: "{{ discord_webhook}}"
     sensor_group: "coretemp-isa-0000"
-    threshold: 70
+    threshold: 40
 
   tasks:
     - name: Get JSON output from sensors
