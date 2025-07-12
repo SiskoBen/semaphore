@@ -1,9 +1,9 @@
 ---
 - name: Monitor all core temperatures via sensors JSON and alert Discord
-  hosts: all
+  hosts: GMKtec
   become: true
   vars:
-    discord_webhook: "https://discord.com/api/webhooks/your_webhook_url"
+    discord_webhook: "{{ discord_webhook}}"
     sensor_group: "coretemp-isa-0000"
     threshold: 70
 
