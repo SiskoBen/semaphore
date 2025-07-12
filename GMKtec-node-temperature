@@ -7,7 +7,7 @@
     sensor_group: "coretemp-isa-0000"
     sensor_label: "Core 0"
     sensor_field: "temp2_input"
-    threshold: 90
+    threshold: 70
 
   tasks:
     - name: Get JSON output from sensors
