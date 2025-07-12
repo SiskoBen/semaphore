@@ -36,12 +36,14 @@
       set_fact:
         hot_core_found: >-
           {% set hot = false %}
-          {% for item in sensors_json[sensor_group].values() %}
-            {% for val in item.values() %}
-              {% if val is number and val > threshold %}
-                {% set hot = true %}
-              {% endif %}
-            {% endfor %}
+          {% for item in sensors_json[sensor_group] | dict2items %}
+            {% if item.key is match("^Core [0-9]+$") %}
+              {% for attr_name, value in item.value.items() %}
+                {% if attr_name is match("^temp[0-9]+_input$") and value is number and value > threshold %}
+                  {% set hot = true %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
           {% endfor %}
           {{ hot }}
 
