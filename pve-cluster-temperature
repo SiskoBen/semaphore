@@ -17,31 +17,6 @@
       set_fact:
         sensors_json: "{{ sensors_raw.stdout | from_json }}"
 
-    - name: Build full temperature report
-      set_fact:
-        temp_report: >-
-          {% set lines = [] %}
-          {% for chip_name, chip_data in sensors_json.items() %}
-            {% for sensor_label, values in chip_data.items() %}
-              {% if sensor_label != "Adapter" %}
-                {% if values is mapping %}
-                  {% for field, value in values.items() %}
-                    {% if field is match("^temp[0-9]+_input$") %}
-                      {% set line = chip_name ~ " → " ~ sensor_label ~ ": " ~ value ~ "°C" %}
-                      {% set lines = lines + [line] %}
-                    {% endif %}
-                  {% endfor %}
-                {% else %}
-                  {% if sensor_label is match("^temp[0-9]+_input$") %}
-                    {% set line = chip_name ~ ": " ~ values ~ "°C" %}
-                    {% set lines = lines + [line] %}
-                  {% endif %}
-                {% endif %}
-              {% endif %}
-            {% endfor %}
-          {% endfor %}
-          {{ lines | join('\n') }}
-
     - name: Check if any sensor is above threshold
       set_fact:
         hot_sensor_found: >-
@@ -61,14 +36,14 @@
           {% endfor %}
           {{ hot }}
 
-    - name: Send Discord alert with full temperature report
+    - name: Send Discord alert if temperature is high
       uri:
         url: "{{ discord_webhook }}"
         method: POST
         body_format: json
-        body: >-
+        body: >
           {
-            "content": "🌡️ {{ inventory_hostname }}: Temperature Alert\nThreshold: {{ threshold }}°C\n\n```{{ temp_report }}```"
+            "content": "🔥 {{ inventory_hostname }}: One or more temperature sensors are above {{ threshold }}°C"
           }
         headers:
           Content-Type: application/json
