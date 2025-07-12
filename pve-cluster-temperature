@@ -59,8 +59,7 @@
         body_format: json
         body: >
           {
-            "content": "🌡️ {{ inventory_hostname }}: Temperature Alert\nThreshold: {{ threshold }}°C\n\n{{ temp_report }}"
-          }
+            "content": "🌡️ {{ inventory_hostname }}: Temperature Alert\nThreshold: {{ threshold }}°C\n\n{{ temp_report | replace('\n', '\\n') }}"
         headers:
           Content-Type: application/json
         status_code: 204
