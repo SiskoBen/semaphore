@@ -1,0 +1,35 @@
+---
+- name: Monitor UPS status using upsd/upsc
+  hosts: monitored_hosts
+  become: true
+  tasks:
+
+    - name: Ensure upsd is installed
+      package:
+        name: nut
+        state: present
+
+    - name: Check if upsd service is running
+      service:
+        name: nut-server
+        state: started
+        enabled: true
+
+    - name: Run upsc to get UPS status
+      command: upsc meterkast-apc@localhost
+      register: upsc_output
+      failed_when: upsc_output.rc != 0
+
+    - name: Display UPS status
+      debug:
+        msg: "{{ upsc_output.stdout_lines }}"
+
+    - name: Alert if UPS is on battery
+      when: "'OB' in upsc_output.stdout"
+      debug:
+        msg: "⚠️ UPS is running on battery!"
+
+    - name: Alert if UPS is low battery
+      when: "'LB' in upsc_output.stdout"
+      debug:
+        msg: "🔋 UPS battery is low!"
