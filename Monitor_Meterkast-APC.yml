@@ -62,7 +62,7 @@
           Content-Type: application/json
         status_code: 204
       when:
-        - "'ALARM' in ups_status_line"
+        - "'ALARM' in ups_status_full"
         - "'ALARM' not in previous_status"
       
     - name: Alert if UPS is on battery
