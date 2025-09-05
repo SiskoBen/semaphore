@@ -27,11 +27,12 @@
     - name: Extract all UPS status flags
       set_fact:
         ups_status_flags: "{{ upsc_output.stdout | regex_findall('ups.status:\\s*(.*)') | first | split(' ') }}"
+        ups_status_full: "{{ ups_status_flags | join(', ') }}"
     
     - name: Alert if UPS is in alarm state
       when: "'ALARM' in upsc_output.stdout"
       debug:
-        msg: "⚠️ UPS is in alarm state! UPS status flags: {{ ups_status_flags | join(', ') }}"
+        msg: "⚠️ UPS is in alarm state! UPS status flags: {{ ups_status_full }}"
 
     - name: Send Discord alert if ALARM is present
       uri:
