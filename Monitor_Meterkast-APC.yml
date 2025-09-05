@@ -71,7 +71,7 @@
         body_format: json
         body: >
           {
-            "content": "🔄 UPS status changed!\nPrevious: {{ previous_status }}\nCurrent: {{ ups_status_line }}"
+            "content": "🔄 UPS status changed!\nPrevious: {{ previous_status }}\nCurrent: {{ ups_status_full }}"
           }
         headers:
           Content-Type: application/json
