@@ -47,8 +47,8 @@
         headers:
           Content-Type: application/json
         status_code: 204
-        when: "'ALARM' in upsc_output.stdout"
-
+        when: 'ALARM' in upsc_output.stdout
+      
     - name: Alert if UPS is on battery
       when: "'OB' in upsc_output.stdout"
       debug:
