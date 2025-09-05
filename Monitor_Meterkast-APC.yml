@@ -1,6 +1,6 @@
 ---
 - name: Monitor UPS status using upsd/upsc
-  hosts: monitored_hosts
+  hosts: GMKTec2
   become: true
   tasks:
 
