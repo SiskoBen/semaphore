@@ -57,7 +57,7 @@
         url: "{{ discord_webhook}}"
         method: POST
         body_format: json
-        body: '{"content": "🚨 UPS ALERT: Status contains ALARM! UPS status flags: {{ ups_status_full }} Previous: {{ previous_status }}"}'
+        body: '{"content": "🚨 UPS ALERT: Status contains ALARM! UPS status flags: {{ ups_status_full }}"}'
         headers:
           Content-Type: application/json
         status_code: 204
