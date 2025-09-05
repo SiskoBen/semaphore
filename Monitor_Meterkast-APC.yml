@@ -65,16 +65,19 @@
         - "'ALARM' in ups_status_full"
         - "'ALARM' not in previous_status"
         
-#    - name: Send Discord alert if UPS status changed
-#      uri:
-#        url: "{{ discord_webhook }}"
-#        method: POST
-#        body_format: json
-#        body: '{"content": "🔄 UPS status changed! Previous: {{ previous_status }} Current: {{ ups_status_full }}"}'
-#        headers:
-#          Content-Type: application/json
-#        status_code: 204
-#      when: ups_status_full != previous_status  
+    - name: Send Discord alert if UPS status changed
+      uri:
+        url: "{{ discord_webhook }}"
+        method: POST
+        body_format: json
+        body: content >
+          🔄 UPS status changed! 
+          Previous: {{ previous_status }} 
+          Current: {{ ups_status_full }}
+        headers:
+          Content-Type: application/json
+        status_code: 204
+      when: ups_status_full != previous_status  
       
     - name: Alert if UPS is on battery
       when: "'OB' in upsc_output.stdout"
