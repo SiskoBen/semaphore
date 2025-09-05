@@ -33,6 +33,14 @@
       debug:
         msg: "⚠️ UPS is in alarm state! UPS status flags: {{ ups_status_flags | join(', ') }}"
 
+    - name: Send Discord alert if ALARM is present
+      when: "'ALARM' in ups_status_line"
+      community.general.discord:
+        webhook_id: "{{ discord_webhook_id }}"
+        webhook_token: "{{ discord_webhook_token }}"
+        content: "🚨 UPS ALERT: Status contains ALARM! ⚠️ Check immediately."
+
+
     - name: Alert if UPS is on battery
       when: "'OB' in upsc_output.stdout"
       debug:
