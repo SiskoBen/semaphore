@@ -69,10 +69,7 @@
         url: "{{ discord_webhook }}"
         method: POST
         body_format: json
-        body: >
-          {
-            "content": "🔄 UPS status changed! Previous: {{ previous_status }} Current: {{ ups_status_full }}"
-          }
+        body: '{"content": "🔄 UPS status changed!\nPrevious: {{ previous_status }}\nCurrent: {{ ups_status_full }}"}'
         headers:
           Content-Type: application/json
         status_code: 204
