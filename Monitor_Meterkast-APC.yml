@@ -45,7 +45,7 @@
     - name: Save current UPS status to file
       copy:
         dest: /var/tmp/last_ups_status.txt
-        content: "{{ ups_status_line }}"
+        content: "{{ ups_status_full }}"
         
     - name: Alert if UPS is in alarm state
       when: "'ALARM' in upsc_output.stdout"
