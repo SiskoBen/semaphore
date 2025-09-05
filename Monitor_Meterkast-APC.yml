@@ -14,6 +14,7 @@
         name: nut-server
         state: started
         enabled: true
+        
     - name: Read previous UPS status
       slurp:
         src: /var/tmp/last_ups_status.txt
@@ -22,7 +23,7 @@
 
     - name: Decode previous status
       set_fact:
-        previous_status: "{{ previous_status_raw.content | b64decode | default('') }}"
+        previous_status: "{{ previous_status_raw.content | default('') | b64decode }}"
         
     - name: Run upsc to get UPS status
       command: upsc meterkast-apc@localhost
