@@ -36,7 +36,6 @@
       when: "'ALARM' in upsc_output.stdout"
       debug:
         msg: "⚠️ UPS is in alarm state! UPS status flags: {{ ups_status_full }}"
-        msg: "⚠️ UPS is in alarm state! UPS status flags: {{ ups_status_flags | join(', ') }}"
 
     - name: Send Discord alert if ALARM is present
       uri:
