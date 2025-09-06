@@ -25,21 +25,15 @@
 #          {{ (upsc_output.stdout | regex_search('ups.status:\\s*(.*)', '\\1') | default('') | split(' ')) }}
 
     - name: Extract UPS status flags
-      delegate_to: localhost
-      become: false
       set_fact:
         ups_status_flags: >-
           {{ (upsc_output.stdout | regex_findall('ups.status:\\s*(.*)') | first | default('') | split(' ')) }}
 
     - name: Compose full UPS status string
-      delegate_to: localhost
-      become: false
       set_fact:
         ups_status_full: "{{ ups_status_flags | join(', ') }}"
 
     - name: Show full UPS status string
-      delegate_to: localhost
-      become: false
       debug:
         var: ups_status_full
         
