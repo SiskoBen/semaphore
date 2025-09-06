@@ -37,7 +37,7 @@
 
     - name: Extract full UPS status flags
       set_fact:
-        ups_status_full: "{{ ups_status_flags | join(', ') }}"
+        ups_status_full: "{{ ups_status_flags | join(', ') | trim }}"
         
     - name: Show full UPS status string
       debug:
