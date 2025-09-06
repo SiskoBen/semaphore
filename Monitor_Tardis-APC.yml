@@ -33,11 +33,19 @@
       set_fact:
         ups_status_full: "{{ ups_status_flags | join(', ') }}"
 
+    - name: Show raw previous UPS status
+      debug:
+        var: previous_status_raw.stdout
+        
     - name: Read previous UPS status via raw
       raw: "cat {{ status_file }}"
       register: previous_status_raw
       ignore_errors: true
 
+    - name: Show raw previous UPS status
+      debug:
+        var: previous_status_raw.stdout
+    
     - name: Set previous UPS status
       set_fact:
         previous_status: "{{ previous_status_raw.stdout | default('') }}"
