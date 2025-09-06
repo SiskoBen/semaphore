@@ -29,6 +29,10 @@
 #        ups_status_flags: >-
 #          {{ (upsc_output.stdout | regex_findall('ups.status:\\s*(.*)') | first | default('') | split(' ')) }}
 
+    - name: Show joined UPS output
+      debug:
+        msg: "{{ upsc_output.stdout_lines | join('\n') }}"
+        
     - name: Extract UPS status flags
       set_fact:
         ups_status_flags: >-
