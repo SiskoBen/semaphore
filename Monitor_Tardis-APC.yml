@@ -62,6 +62,13 @@
 
     - name: Save current UPS status to file via raw
       raw: "echo '{{ ups_status_full }}' > {{ status_file }}"
+      
+    - name: Show cleaned previous UPS status
+      debug:
+        msg: "Previous status is: '{{ previous_status }}'"
+    - name: Show cleaned current UPS status
+      debug:
+        msg: "Current status is: '{{ ups_status_full }}'"
 
     - name: Alert if UPS is in alarm state
       when: "'ALARM' in ups_status_flags"
