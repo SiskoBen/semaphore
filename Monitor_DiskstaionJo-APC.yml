@@ -68,7 +68,7 @@
       delegate_to: localhost
       become: false
       set_fact:
-        previous_status: "{{ previous_status_raw.content | b64decode | trim }}"
+        previous_status: "{{ previous_status_raw.content | default('') | b64decode | trim }}"
 
     - name: Show raw previous UPS status
       debug:
