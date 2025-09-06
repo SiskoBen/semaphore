@@ -54,7 +54,7 @@
     
     - name: Set previous UPS status
       set_fact:
-        previous_status: "{{ previous_status_raw.stdout | default('') }}"
+        previous_status: "{{ previous_status_raw.stdout | default('') | trim}}"
 
     - name: Show raw previous UPS status
       debug:
