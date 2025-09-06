@@ -56,9 +56,9 @@
       register: previous_status_raw
       ignore_errors: true
 
-    - name: Show raw previous UPS status raw
-      debug:
-        var: previous_status_raw.stdout
+#    - name: Show raw previous UPS status raw
+#      debug:
+#        var: previous_status_raw.stdout
     
 #    - name: Set previous UPS status
 #      set_fact:
