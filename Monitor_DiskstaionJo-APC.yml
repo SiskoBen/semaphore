@@ -43,8 +43,16 @@
       debug:
         var: ups_status_full
         
-    - name: Read previous UPS status via raw
-      raw: "cat {{ status_file }}"
+#    - name: Read previous UPS status via raw
+#      raw: "cat {{ status_file }}"
+#      register: previous_status_raw
+#      ignore_errors: true
+
+    - name: Read previous UPS status from control node
+      delegate_to: localhost
+      become: false
+      slurp:
+        src: "/tmp/last_diskstationjo_ups_status.txt"
       register: previous_status_raw
       ignore_errors: true
 
@@ -52,16 +60,29 @@
       debug:
         var: previous_status_raw.stdout
     
-    - name: Set previous UPS status
+#    - name: Set previous UPS status
+#      set_fact:
+#        previous_status: "{{ previous_status_raw.stdout | default('') | trim}}"
+        
+    - name: Decode previous UPS status
+      delegate_to: localhost
+      become: false
       set_fact:
-        previous_status: "{{ previous_status_raw.stdout | default('') | trim}}"
+        previous_status: "{{ previous_status_raw.content | b64decode | trim }}"
 
     - name: Show raw previous UPS status
       debug:
         var: previous_status
 
-    - name: Save current UPS status to file via raw
-      raw: "echo '{{ ups_status_full }}' > {{ status_file }}"
+#    - name: Save current UPS status to file via raw
+#      raw: "echo '{{ ups_status_full }}' > {{ status_file }}"
+      
+    - name: Save current UPS status to control node
+      delegate_to: localhost
+      become: false
+      copy:
+        dest: "/tmp/last_diskstationjo_ups_status.txt"
+        content: "{{ ups_status_full }}"
       
     - name: Show cleaned previous UPS status
       debug:
