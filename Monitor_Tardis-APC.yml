@@ -52,6 +52,7 @@
 
     - name: Send Discord alert if ALARM is present
       delegate_to: localhost
+      become: false
       uri:
         url: "{{ discord_webhook }}"
         method: POST
@@ -67,6 +68,7 @@
 
     - name: Send Discord alert if UPS status changed
       delegate_to: localhost
+      become: false
       uri:
         url: "{{ discord_webhook }}"
         method: POST
