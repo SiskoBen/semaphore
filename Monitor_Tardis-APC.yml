@@ -48,13 +48,17 @@
       register: previous_status_raw
       ignore_errors: true
 
-    - name: Show raw previous UPS status
+    - name: Show raw previous UPS status raw
       debug:
         var: previous_status_raw.stdout
     
     - name: Set previous UPS status
       set_fact:
         previous_status: "{{ previous_status_raw.stdout | default('') }}"
+
+    - name: Show raw previous UPS status
+      debug:
+        var: previous_status
 
     - name: Save current UPS status to file via raw
       raw: "echo '{{ ups_status_full }}' > {{ status_file }}"
