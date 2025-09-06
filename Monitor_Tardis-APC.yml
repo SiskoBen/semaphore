@@ -24,11 +24,16 @@
 #        ups_status_flags: >-
 #          {{ (upsc_output.stdout | regex_search('ups.status:\\s*(.*)', '\\1') | default('') | split(' ')) }}
 
+#    - name: Extract UPS status flags
+#      set_fact:
+#        ups_status_flags: >-
+#          {{ (upsc_output.stdout | regex_findall('ups.status:\\s*(.*)') | first | default('') | split(' ')) }}
+
     - name: Extract UPS status flags
       set_fact:
         ups_status_flags: >-
-          {{ (upsc_output.stdout | regex_findall('ups.status:\\s*(.*)') | first | default('') | split(' ')) }}
-
+          {{ (upsc_output.stdout_lines | join('\n') | regex_findall('ups.status:\\s*(.*)') | first | default('') | split(' ')) }}
+          
     - name: Compose full UPS status string
       set_fact:
         ups_status_full: "{{ ups_status_flags | join(', ') }}"
