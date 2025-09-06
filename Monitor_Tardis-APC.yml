@@ -15,9 +15,13 @@
       register: upsc_output
       failed_when: upsc_output.rc != 0
 
-    - name: Display UPS status
+    - name: Display UPS status lines
       debug:
         msg: "{{ upsc_output.stdout_lines }}"
+
+    - name: Display UPS status
+      debug:
+        msg: "{{ upsc_output.stdout }}"
 
 #    - name: Extract UPS status flags
 #      set_fact:
