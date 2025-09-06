@@ -51,6 +51,7 @@
         msg: "⚠️ UPS is in alarm state! UPS status flags: {{ ups_status_full }}"
 
     - name: Send Discord alert if ALARM is present
+      delegate_to: localhost
       uri:
         url: "{{ discord_webhook }}"
         method: POST
@@ -65,6 +66,7 @@
         - "'ALARM' not in previous_status"
 
     - name: Send Discord alert if UPS status changed
+      delegate_to: localhost
       uri:
         url: "{{ discord_webhook }}"
         method: POST
