@@ -23,10 +23,14 @@
       debug:
         msg: "{{ upsc_output.stdout }}"
 
-#    - name: Extract UPS status flags
-#      set_fact:
-#        ups_status_flags: >-
-#          {{ (upsc_output.stdout | regex_search('ups.status:\\s*(.*)', '\\1') | default('') | split(' ')) }}
+    - name: Extract UPS status flags
+      set_fact:
+        ups_status_flags: >-
+          {{ (upsc_output.stdout | regex_search('ups.status:\\s*(.*)', '\\1') | default('') | split(' ')) }}
+          
+    - name: Show UPS status flags
+      debug:
+        msg: "{{ ups_status_flags }}"
 
 #    - name: Extract UPS status flags
 #      set_fact:
