@@ -11,7 +11,11 @@
 
 
   tasks:
-
+    - name: Debug is enabled
+      debug:
+        msg: "Debug mode is ON"
+      when: (show_debug | default(false)) | bool
+      
     - name: Run upsc command via raw
       raw: "{{ ups_command }}"
       register: upsc_output
