@@ -7,7 +7,8 @@
   vars:
     ups_command: "upsc ups@localhost"
     status_file: "/var/tmp/last_ups_status.txt"
-
+    show_debug: true
+    
   tasks:
 
     - name: Run upsc command via raw
@@ -18,6 +19,7 @@
     - name: Display UPS status lines
       debug:
         msg: "{{ upsc_output.stdout_lines }}"
+      when: (show_debug | default(false)) | bool
 
 #    - name: Display UPS status
 #      debug:
@@ -42,6 +44,7 @@
     - name: Show full UPS status string
       debug:
         var: ups_status_full
+      when: (show_debug | default(false)) | bool
         
     - name: Read previous UPS status via raw
       raw: "cat {{ status_file }}"
@@ -51,6 +54,7 @@
     - name: Show raw previous UPS status raw
       debug:
         var: previous_status_raw.stdout
+      when: (show_debug | default(false)) | bool
     
     - name: Set previous UPS status
       set_fact:
@@ -59,6 +63,7 @@
     - name: Show raw previous UPS status
       debug:
         var: previous_status
+      when: (show_debug | default(false)) | bool
 
     - name: Save current UPS status to file via raw
       raw: "echo '{{ ups_status_full }}' > {{ status_file }}"
@@ -66,14 +71,18 @@
     - name: Show cleaned previous UPS status
       debug:
         msg: "Previous status is: '{{ previous_status }}'"
+      when: (show_debug | default(false)) | bool
+
     - name: Show cleaned current UPS status
       debug:
         msg: "Current status is: '{{ ups_status_full }}'"
+      when: (show_debug | default(false)) | bool
 
     - name: Alert if UPS is in alarm state
       when: "'ALARM' in ups_status_flags"
       debug:
         msg: "⚠️ UPS is in alarm state! UPS status flags: {{ ups_status_full }}"
+      when: (show_debug | default(false)) | bool
 
     - name: Send Discord alert if ALARM is present
       delegate_to: localhost
@@ -112,10 +121,12 @@
       when: "'OB' in ups_status_flags"
       debug:
         msg: "⚠️ UPS is running on battery!"
+      when: (show_debug | default(false)) | bool
 
     - name: Alert if UPS battery is low
       when: "'LB' in ups_status_flags"
       debug:
         msg: "🔋 UPS battery is low!"
+      when: (show_debug | default(false)) | bool
 
 
