@@ -4,7 +4,8 @@
   become: true
 
   vars:
-    show_debug: true
+    show_debug: false
+    
   tasks:
 
     - name: Ensure upsd is installed
