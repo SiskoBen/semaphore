@@ -79,10 +79,11 @@
       when: (show_debug | default(false)) | bool
 
     - name: Alert if UPS is in alarm state
-      when: "'ALARM' in ups_status_flags"
+      when: 
+        - "'ALARM' in ups_status_flags"
+        - (show_debug | default(false)) | bool
       debug:
         msg: "⚠️ UPS is in alarm state! UPS status flags: {{ ups_status_full }}"
-      when: (show_debug | default(false)) | bool
 
     - name: Send Discord alert if ALARM is present
       delegate_to: localhost
@@ -118,15 +119,17 @@
       when: ups_status_full != previous_status
 
     - name: Alert if UPS is on battery
-      when: "'OB' in ups_status_flags"
+      when: 
+        - "'OB' in ups_status_flags"
+        - (show_debug | default(false)) | bool
       debug:
         msg: "⚠️ UPS is running on battery!"
-      when: (show_debug | default(false)) | bool
-
+ 
     - name: Alert if UPS battery is low
-      when: "'LB' in ups_status_flags"
+      when: 
+        - "'LB' in ups_status_flags"
+        - (show_debug | default(false)) | bool
       debug:
         msg: "🔋 UPS battery is low!"
-      when: (show_debug | default(false)) | bool
-
+ 
 
