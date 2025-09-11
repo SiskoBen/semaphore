@@ -7,7 +7,7 @@
   vars:
     ups_command: "upsc ups@localhost"
     status_file: "/var/tmp/last_ups_status.txt"
-    show_debug: true
+    show_debug: false
     
   tasks:
 
