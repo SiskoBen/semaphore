@@ -25,6 +25,6 @@
 
     - name: Display prune output
       debug:
-        msg: "{{ prunec_output.stdout_lines }}"
+        msg: "{{ prune_output.stdout_lines }}"
       when: (show_debug | default(false)) | bool
 
