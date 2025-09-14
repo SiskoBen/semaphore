@@ -1,16 +1,17 @@
 ---
 - name: Prune TruenasM GMKTec backups
-  hosts: truenasm
+  hosts: truenas-main
   become: true
   gather_facts: false
 
   vars:
+    backup_path: "/mnt/TrueNASPool1/LaptopBackup/GMKtecJoWin11/"
+  
     # actual command
-    # prune_command: 'find /volume1/Opslag_Jo/Backups\ via\ AOMEI\ Backupper/GMKTecG3Plus_Win11/ -type f ! -mtime +15 -exec rm -f {} \;'
+    # prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} rm "{{ backup_path }}/{}"'
     # dry-run command
-    prune_command: 'find /volume1/Opslag_Jo/Backups\ via\ AOMEI\ Backupper/GMKTecG3Plus_Win11/ -type f ! -mtime +15'
+    prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} echo "{{ backup_path }}/{}"'
     show_debug: true
-
 
   tasks:
     - name: Debug is enabled
