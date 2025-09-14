@@ -1,0 +1,29 @@
+---
+- name: Prune TruenasM GMKTec backups
+  hosts: truenasm
+  become: true
+  gather_facts: false
+
+  vars:
+    # actual command
+    # prune_command: 'find /volume1/Opslag_Jo/Backups\ via\ AOMEI\ Backupper/GMKTecG3Plus_Win11/ -type f ! -mtime +15 -exec rm -f {} \;'
+    # dry-run command
+    prune_command: 'find /volume1/Opslag_Jo/Backups\ via\ AOMEI\ Backupper/GMKTecG3Plus_Win11/ -type f ! -mtime +15'
+    show_debug: true
+
+
+  tasks:
+    - name: Debug is enabled
+      debug:
+        msg: "Debug mode is ON"
+      when: (show_debug | default(false)) | bool
+      
+    - name: Run prune command via raw
+      raw: "{{ prune_command }}"
+      register: prune_output
+      failed_when: prune_output.rc != 0
+
+    - name: Display prune output
+      debug:
+        msg: "{{ prune_output.stdout_lines }}"
+      when: (show_debug | default(false)) | bool
