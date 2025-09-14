@@ -5,9 +5,9 @@
   gather_facts: false
 
   vars:
-    backup_path: "/mnt/TrueNASPool1/LaptopBackup/GMKtecJoWin11/"
+    # backup_path: "/mnt/TrueNASPool1/LaptopBackup/GMKtecJoWin11/"
     ### alternate [new] path
-    # backup_path: "/mnt/TrueNASPool1/LaptopBackup/GMKTecG3Plus_Win11_Jo"
+    backup_path: "/mnt/TrueNASPool1/LaptopBackup/GMKTecG3Plus_Win11_Jo"
     
     ### actual command
     prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} rm "{{ backup_path }}/{}"'
