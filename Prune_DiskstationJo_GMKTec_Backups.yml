@@ -7,10 +7,10 @@
   vars:
     backup_path: "/volume1/Opslag_Jo/Backups via AOMEI Backupper/GMKTecG3Plus_Win11"
   
-    # actual command
-    # prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} rm "{{ backup_path }}/{}"'
-    # dry-run command
-    prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} echo "{{ backup_path }}/{}"'
+    ### actual command
+    prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} rm "{{ backup_path }}/{}"'
+    ### dry-run command
+    # prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} echo "{{ backup_path }}/{}"'
     show_debug: true
 
 
