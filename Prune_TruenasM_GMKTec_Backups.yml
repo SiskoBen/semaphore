@@ -10,9 +10,9 @@
     # backup_path: "/mnt/TrueNASPool1/LaptopBackup/GMKTecG3Plus_Win11_Jo"
     
     ### actual command
-    # prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} rm "{{ backup_path }}/{}"'
+    prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} rm "{{ backup_path }}/{}"'
     ### dry-run command
-    prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} echo "{{ backup_path }}/{}"'
+    # prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} echo "{{ backup_path }}/{}"'
     show_debug: true
 
   tasks:
