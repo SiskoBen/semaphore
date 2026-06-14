@@ -1,10 +1,11 @@
 ---
 - name: Prune TruenasM GMKTec backups
   hosts: truenas-main
+  become: true         # Kept at the play level since your original run liked this
   gather_facts: false
 
   vars:
-    # backup path
+    # backups path
     backup_path: "/mnt/BigPool/LaptopBackup/GMKTecG3Plus_Win11_Jo"
     show_debug: true
     
@@ -19,52 +20,38 @@
             msg: "⚠️ DRY RUN IS ENABLED! No files will actually be deleted. Set 'dry_run: false' to apply changes."
           when: dry_run | bool
 
-        # FORCED ESCALATION: Explicitly checking the path as root
+        # 1. HARD CHECK: Check if directory exists using a robust shell command
+        # This will fail explicitly if the directory is missing, triggering the rescue block.
         - name: Verify backup directory exists
-          ansible.builtin.stat:
-            path: "{{ backup_path }}"
-          become: true
-          become_method: sudo
-          register: path_status
+          ansible.builtin.shell: |
+            if [ ! -d "{{ backup_path }}" ]; then
+              echo "ERROR: {{ backup_path }} does not exist or is not a directory" >&2
+              exit 1
+            fi
+          register: dir_check
 
-        - name: Fail explicitly if path is missing or not a directory
-          ansible.builtin.fail:
-            msg: "The target path '{{ backup_path }}' does not exist or is not a directory!"
-          when: not path_status.stat.exists or not path_status.stat.isdir
-
-        # FORCED ESCALATION: Explicitly reading files as root
-        - name: Find all files in the backup directory
-          ansible.builtin.find:
-            paths: "{{ backup_path }}"
-            file_type: file
-          become: true
-          become_method: sudo
-          register: found_files
-
-        - name: Display total files found
-          ansible.builtin.debug:
-            msg: "Found {{ found_files.files | length }} files total in {{ backup_path }}"
-          when: (show_debug | default(false)) | bool
-
+        # 2. DRY RUN PATH
         - name: Simulate file deletion (Dry Run)
+          ansible.builtin.shell: |
+            set -o pipefail
+            ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} echo "WOULD DELETE: {{ backup_path }}/{}"
+          register: dry_run_output
+          when: dry_run | bool
+
+        - name: Display Dry Run Results
           ansible.builtin.debug:
-            msg: "WOULD DELETE OLD FILE: {{ item.path }} (Modified: {{ item.mtime }})"
-          loop: "{{ (found_files.files | sort(attribute='mtime', reverse=true))[15:] }}"
+            msg: "{{ dry_run_output.stdout_lines }}"
           when: 
             - dry_run | bool
-            - found_files.files | length > 15
+            - (show_debug | default(false)) | bool
 
-        # FORCED ESCALATION: Explicitly deleting files as root
+        # 3. REAL EXECUTION PATH
         - name: Sort and remove files older than the newest 15 (Active Execution)
-          ansible.builtin.file:
-            path: "{{ item.path }}"
-            state: absent
-          become: true
-          become_method: sudo
-          loop: "{{ (found_files.files | sort(attribute='mtime', reverse=true))[15:] }}"
-          when: 
-            - not (dry_run | bool)
-            - found_files.files | length > 15
+          ansible.builtin.shell: |
+            set -o pipefail
+            ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} rm "{{ backup_path }}/{}"
+          register: real_run_output
+          when: not (dry_run | bool)
 
       rescue:
         - name: Send Discord message on failure
@@ -73,7 +60,15 @@
             method: POST
             body_format: json
             body: 
-              content: "❌ **Prune Backups Failed!**\n**Host:** {{ inventory_hostname }}\n**Target Path:** `{{ backup_path }}`\n**Dry Run Mode:** `{{ dry_run }}`\n**Error Details:** {{ ansible_failed_result.msg | default('An unknown error occurred.') }}"
+              content: |
+                ❌ **Prune Backups Failed!**
+                **Host:** {{ inventory_hostname }}
+                **Target Path:** `{{ backup_path }}`
+                **Dry Run Mode:** `{{ dry_run }}`
+                **Error Details:** ```
+                {{ ansible_failed_result.msg | default('') }}
+                {{ ansible_failed_result.stderr | default('No standard error returned.') }}
+                ```
             headers:
               Content-Type: application/json
             status_code: 204
