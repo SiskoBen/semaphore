@@ -5,28 +5,63 @@
   gather_facts: false
 
   vars:
-    # backup_path: "/mnt/TrueNASPool1/LaptopBackup/GMKtecJoWin11/"
-    ### alternate [new] path
+    # alternate [new] path
     backup_path: "/mnt/TrueNASPool1/LaptopBackup/GMKTecG3Plus_Win11_Jo"
-    
-    ### actual command
-    prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} rm "{{ backup_path }}/{}"'
-    ### dry-run command
-    # prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} echo "{{ backup_path }}/{}"'
     show_debug: true
+    
+    # DRY-RUN SAFETY SWITCH
+    # Set to true to test the logic. Set to false to actually delete files.
+    dry_run: true 
 
   tasks:
-    - name: Debug is enabled
-      debug:
-        msg: "Debug mode is ON"
-      when: (show_debug | default(false)) | bool
-      
-    - name: Run prune command via raw
-      raw: "{{ prune_command }}"
-      register: prune_output
-      failed_when: prune_output.rc != 0
+    - name: Run backup pruning process with error handling
+      block:
+        - name: Print Dry-Run warning banner
+          ansible.builtin.debug:
+            msg: "⚠️ DRY RUN IS ENABLED! No files will actually be deleted. Set 'dry_run: false' to apply changes."
+          when: dry_run | bool
 
-    - name: Display prune output
-      debug:
-        msg: "{{ prune_output.stdout_lines }}"
-      when: (show_debug | default(false)) | bool
+        - name: Find all files in the backup directory
+          ansible.builtin.find:
+            paths: "{{ backup_path }}"
+            file_type: file
+          register: found_files
+
+        - name: Display total files found
+          ansible.builtin.debug:
+            msg: "Found {{ found_files.files | length }} files total in {{ backup_path }}"
+          when: (show_debug | default(false)) | bool
+
+        - name: Simulate file deletion (Dry Run)
+          ansible.builtin.debug:
+            msg: "WOULD DELETE OLD FILE: {{ item.path }} (Modified: {{ item.mtime }})"
+          loop: "{{ (found_files.files | sort(attribute='mtime', reverse=true))[15:] }}"
+          when: 
+            - dry_run | bool
+            - found_files.files | length > 15
+
+        - name: Sort and remove files older than the newest 15 (Active Execution)
+          ansible.builtin.file:
+            path: "{{ item.path }}"
+            state: absent
+          loop: "{{ (found_files.files | sort(attribute='mtime', reverse=true))[15:] }}"
+          when: 
+            - not (dry_run | bool)
+            - found_files.files | length > 15
+
+      rescue:
+        - name: Send Discord message on failure
+          ansible.builtin.uri:
+            url: "{{ discord_webhook }}" # Pulled automatically from your Semaphore Variable Group
+            method: POST
+            body_format: json
+            body: 
+              content: "❌ **Prune Backups Failed!**\n**Host:** {{ inventory_hostname }}\n**Target Path:** `{{ backup_path }}`\n**Dry Run Mode:** `{{ dry_run }}`\n**Error Details:** {{ ansible_failed_result.msg | default('An unknown task failed inside the playbook execution.') }}"
+            headers:
+              Content-Type: application/json
+            status_code: 204
+          ignore_errors: true
+
+        - name: Force playbook failure after notification
+          ansible.builtin.fail:
+            msg: "The pruning playbook failed. Discord notification has been sent."
