@@ -10,7 +10,6 @@
     show_debug: true
     
     # DRY-RUN SAFETY SWITCH
-    # Set to true to test the logic. Set to false to actually delete files.
     dry_run: true 
 
   tasks:
@@ -21,6 +20,18 @@
             msg: "⚠️ DRY RUN IS ENABLED! No files will actually be deleted. Set 'dry_run: false' to apply changes."
           when: dry_run | bool
 
+        # NEW CHECK: Verify the path exists and is a directory
+        - name: Verify backup directory exists
+          ansible.builtin.stat:
+            path: "{{ backup_path }}"
+          register: path_status
+
+        - name: Fail explicitly if path is missing or not a directory
+          ansible.builtin.fail:
+            msg: "The target path '{{ backup_path }}' does not exist or is not a directory!"
+          when: not path_status.stat.exists or not path_status.stat.isdir
+
+        # This will now only run if the path is confirmed valid
         - name: Find all files in the backup directory
           ansible.builtin.find:
             paths: "{{ backup_path }}"
@@ -52,11 +63,11 @@
       rescue:
         - name: Send Discord message on failure
           ansible.builtin.uri:
-            url: "{{ discord_webhook }}" # Pulled automatically from your Semaphore Variable Group
+            url: "{{ discord_webhook }}"
             method: POST
             body_format: json
             body: 
-              content: "❌ **Prune Backups Failed!**\n**Host:** {{ inventory_hostname }}\n**Target Path:** `{{ backup_path }}`\n**Dry Run Mode:** `{{ dry_run }}`\n**Error Details:** {{ ansible_failed_result.msg | default('An unknown task failed inside the playbook execution.') }}"
+              content: "❌ **Prune Backups Failed!**\n**Host:** {{ inventory_hostname }}\n**Target Path:** `{{ backup_path }}`\n**Dry Run Mode:** `{{ dry_run }}`\n**Error Details:** {{ ansible_failed_result.msg | default('An unknown error occurred.') }}"
             headers:
               Content-Type: application/json
             status_code: 204
