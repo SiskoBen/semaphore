@@ -1,14 +1,11 @@
 ---
 - name: Prune TruenasM GMKTec backups
   hosts: truenas-main
-  become: true
   gather_facts: false
 
   vars:
     # alternate [new] path
-    #backup_path: "/mnt/TrueNASPool1/LaptopBackup/GMKTecG3Plus_Win11_Jo"
-    # path after migration to BigPool
-    backup_path: "/mnt/BigPool/LaptopBackup/GMKTecG3Plus_Win11_Jo"
+    backup_path: "/mnt/TrueNASPool1/LaptopBackup/GMKTecG3Plus_Win11_Jo"
     show_debug: true
     
     # DRY-RUN SAFETY SWITCH
@@ -22,10 +19,12 @@
             msg: "⚠️ DRY RUN IS ENABLED! No files will actually be deleted. Set 'dry_run: false' to apply changes."
           when: dry_run | bool
 
-        # NEW CHECK: Verify the path exists and is a directory
+        # FORCED ESCALATION: Explicitly checking the path as root
         - name: Verify backup directory exists
           ansible.builtin.stat:
             path: "{{ backup_path }}"
+          become: true
+          become_method: sudo
           register: path_status
 
         - name: Fail explicitly if path is missing or not a directory
@@ -33,11 +32,13 @@
             msg: "The target path '{{ backup_path }}' does not exist or is not a directory!"
           when: not path_status.stat.exists or not path_status.stat.isdir
 
-        # This will now only run if the path is confirmed valid
+        # FORCED ESCALATION: Explicitly reading files as root
         - name: Find all files in the backup directory
           ansible.builtin.find:
             paths: "{{ backup_path }}"
             file_type: file
+          become: true
+          become_method: sudo
           register: found_files
 
         - name: Display total files found
@@ -53,10 +54,13 @@
             - dry_run | bool
             - found_files.files | length > 15
 
+        # FORCED ESCALATION: Explicitly deleting files as root
         - name: Sort and remove files older than the newest 15 (Active Execution)
           ansible.builtin.file:
             path: "{{ item.path }}"
             state: absent
+          become: true
+          become_method: sudo
           loop: "{{ (found_files.files | sort(attribute='mtime', reverse=true))[15:] }}"
           when: 
             - not (dry_run | bool)
