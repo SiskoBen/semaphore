@@ -4,8 +4,8 @@
   gather_facts: false
 
   vars:
-    # alternate [new] path
-    backup_path: "/mnt/TrueNASPool1/LaptopBackup/GMKTecG3Plus_Win11_Jo"
+    # backup path
+    backup_path: "/mnt/BigPool/LaptopBackup/GMKTecG3Plus_Win11_Jo"
     show_debug: true
     
     # DRY-RUN SAFETY SWITCH
