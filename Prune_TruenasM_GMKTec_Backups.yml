@@ -1,79 +1,32 @@
 ---
 - name: Prune TruenasM GMKTec backups
   hosts: truenas-main
-  become: true         # Kept at the play level since your original run liked this
+  become: true
   gather_facts: false
 
   vars:
-    # backups path
-    backup_path: "/mnt/BigPool/LaptopBackup/GMKTecG3Plus_Win11_Jo"
-    show_debug: true
+    # backup_path: "/mnt/TrueNASPool1/LaptopBackup/GMKtecJoWin11/"
+    ### alternate [new] path
+    backup_path: "/mnt/TrueNASPool1/LaptopBackup/GMKTecG3Plus_Win11_Jo"
     
-    # DRY-RUN SAFETY SWITCH
-    dry_run: true 
+    ### actual command
+    prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} rm "{{ backup_path }}/{}"'
+    ### dry-run command
+    # prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} echo "{{ backup_path }}/{}"'
+    show_debug: true
 
   tasks:
-    - name: Run backup pruning process with error handling
-      block:
-        - name: Print Dry-Run warning banner
-          ansible.builtin.debug:
-            msg: "⚠️ DRY RUN IS ENABLED! No files will actually be deleted. Set 'dry_run: false' to apply changes."
-          when: dry_run | bool
+    - name: Debug is enabled
+      debug:
+        msg: "Debug mode is ON"
+      when: (show_debug | default(false)) | bool
+      
+    - name: Run prune command via raw
+      raw: "{{ prune_command }}"
+      register: prune_output
+      failed_when: prune_output.rc != 0
 
-        # 1. HARD CHECK: Check if directory exists using a robust shell command
-        # This will fail explicitly if the directory is missing, triggering the rescue block.
-        - name: Verify backup directory exists
-          ansible.builtin.shell: |
-            if [ ! -d "{{ backup_path }}" ]; then
-              echo "ERROR: {{ backup_path }} does not exist or is not a directory" >&2
-              exit 1
-            fi
-          register: dir_check
-
-        # 2. DRY RUN PATH
-        - name: Simulate file deletion (Dry Run)
-          ansible.builtin.shell: |
-            set -o pipefail
-            ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} echo "WOULD DELETE: {{ backup_path }}/{}"
-          register: dry_run_output
-          when: dry_run | bool
-
-        - name: Display Dry Run Results
-          ansible.builtin.debug:
-            msg: "{{ dry_run_output.stdout_lines }}"
-          when: 
-            - dry_run | bool
-            - (show_debug | default(false)) | bool
-
-        # 3. REAL EXECUTION PATH
-        - name: Sort and remove files older than the newest 15 (Active Execution)
-          ansible.builtin.shell: |
-            set -o pipefail
-            ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} rm "{{ backup_path }}/{}"
-          register: real_run_output
-          when: not (dry_run | bool)
-
-      rescue:
-        - name: Send Discord message on failure
-          ansible.builtin.uri:
-            url: "{{ discord_webhook }}"
-            method: POST
-            body_format: json
-            body: 
-              content: |
-                ❌ **Prune Backups Failed!**
-                **Host:** {{ inventory_hostname }}
-                **Target Path:** `{{ backup_path }}`
-                **Dry Run Mode:** `{{ dry_run }}`
-                **Error Details:** ```
-                {{ ansible_failed_result.msg | default('') }}
-                {{ ansible_failed_result.stderr | default('No standard error returned.') }}
-                ```
-            headers:
-              Content-Type: application/json
-            status_code: 204
-          ignore_errors: true
-
-        - name: Force playbook failure after notification
-          ansible.builtin.fail:
-            msg: "The pruning playbook failed. Discord notification has been sent."
+    - name: Display prune output
+      debug:
+        msg: "{{ prune_output.stdout_lines }}"
+      when: (show_debug | default(false)) | bool
