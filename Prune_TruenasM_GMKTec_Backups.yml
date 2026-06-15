@@ -29,9 +29,9 @@
     #  register: prune_output
     #  failed_when: prune_output.rc != 0
       
-    - name: Run user check via shell module
-      shell: "whoami && id"
-      register: prune_output
+    - name: Run manual sudo check
+      shell: "sudo whoami && sudo id"
+      register: prune_output      
       
     - name: Display prune output
       debug:
