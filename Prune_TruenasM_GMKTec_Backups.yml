@@ -1,8 +1,6 @@
 ---
 - name: Prune TruenasM GMKTec backups
   hosts: truenas-main
-  become: true
-  become_method: sudo
   gather_facts: false
 
   vars:
@@ -13,9 +11,9 @@
     ### actual command
     #prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} rm "{{ backup_path }}/{}"'
     ### dry-run command
-    # prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} echo "{{ backup_path }}/{}"'
-    ### diagnosis command
-    prune_command: "whoami && id"
+    #prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} echo "{{ backup_path }}/{}"'
+    prune_command: 'sudo ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} echo "{{ backup_path }}/{}"'
+    
     show_debug: true
 
   tasks:
@@ -29,9 +27,9 @@
     #  register: prune_output
     #  failed_when: prune_output.rc != 0
       
-    - name: Run manual sudo check
-      shell: "sudo whoami && sudo id"
-      register: prune_output      
+    - name: Run prune dry-run via shell
+      shell: "{{ prune_command }}"
+      register: prune_output
       
     - name: Display prune output
       debug:
