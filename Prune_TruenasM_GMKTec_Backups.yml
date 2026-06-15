@@ -9,9 +9,8 @@
     backup_path: "/mnt/BigPool/LaptopBackup/GMKTecG3Plus_Win11_Jo"
     
     ### actual command
-    #prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} rm "{{ backup_path }}/{}"'
+    #prune_command: 'sudo ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} sudo rm "{{ backup_path }}/{}"'
     ### dry-run command
-    #prune_command: 'ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} echo "{{ backup_path }}/{}"'
     prune_command: 'sudo ls -1t "{{ backup_path }}" | tail -n +16 | xargs -I{} echo "{{ backup_path }}/{}"'
     
     show_debug: true
@@ -21,16 +20,11 @@
       debug:
         msg: "Debug mode is ON"
       when: (show_debug | default(false)) | bool
-      
-    #- name: Run prune command via raw
-    #  raw: "{{ prune_command }}" 
-    #  register: prune_output
-    #  failed_when: prune_output.rc != 0
-      
-    - name: Run prune dry-run via shell
+
+    - name: Run active prune command via shell
       shell: "{{ prune_command }}"
       register: prune_output
-      
+
     - name: Display prune output
       debug:
         msg: "{{ prune_output.stdout_lines }}"
