@@ -27,7 +27,11 @@
       raw: "{{ prune_command }}" 
       register: prune_output
       failed_when: prune_output.rc != 0
-
+      
+    - name: Run user check via shell module
+      shell: "whoami && id"
+      register: prune_output
+      
     - name: Display prune output
       debug:
         msg: "{{ prune_output.stdout_lines }}"
