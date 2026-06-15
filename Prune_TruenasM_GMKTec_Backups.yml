@@ -30,15 +30,29 @@
         msg: "{{ prune_output.stdout_lines }}"
       when: (show_debug | default(false)) | bool
 
-    - name: Send discord message after backup pruning completes
+    - name: Get post-prune file list (Sorted by Date, Newest First, Human-Readable Sizes)
+      shell: "sudo ls -lash -t '{{ backup_path }}' | head -n 20"
+      register: ls_output
+
+    - name: Get total directory size
+      shell: "sudo du -sh '{{ backup_path }}'"
+      register: du_output
+
+    - name: Send detailed discord message
       uri:
         url: "{{ discord_webhook }}"
         method: POST
         body_format: json
         body:
-          content: "Successfully pruned old backups for **{{ inventory_hostname }}** in dataset `{{ backup_path }}`. Kept the 15 most recent backups."
+          content: |
+            Successfully pruned old backups for **{{ inventory_hostname }}** in `{{ backup_path }}`!
+            **Total Directory Size:** `{{ du_output.stdout.split()[0] }}`
+            
+            **Remaining Files (Newest First):**
+            ```text
+            {{ ls_output.stdout }}
+            ```
         headers:
           Content-Type: application/json
         status_code: 204
-      # This ensures it only runs if the deletion step itself didn't crash
       when: prune_output.rc == 0
