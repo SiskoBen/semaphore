@@ -29,3 +29,16 @@
       debug:
         msg: "{{ prune_output.stdout_lines }}"
       when: (show_debug | default(false)) | bool
+
+    - name: Send discord message after backup pruning completes
+      uri:
+        url: "{{ discord_webhook }}"
+        method: POST
+        body_format: json
+        body:
+          content: "Successfully pruned old backups for **{{ inventory_hostname }}** in dataset `{{ backup_path }}`. Kept the 15 most recent backups."
+        headers:
+          Content-Type: application/json
+        status_code: 204
+      # This ensures it only runs if the deletion step itself didn't crash
+      when: prune_output.rc == 0
